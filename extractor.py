@@ -4,7 +4,7 @@ import struct
 from prettytable import PrettyTable
 from shutil import copyfile
 
-
+# test
 def loadLineToProcess(num, full_path):
     file_ob = open(full_path).readlines()
     line = ""
