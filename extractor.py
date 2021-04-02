@@ -4,7 +4,7 @@ import struct
 from prettytable import PrettyTable
 from shutil import copyfile
 
-# test
+
 def loadLineToProcess(num, full_path):
     file_ob = open(full_path).readlines()
     line = ""
@@ -26,7 +26,15 @@ class MyExtractor:
     m_raw_network_conn = []
     m_readable_conn = []
 
+    m_processes_storage = []
+    m_raw_network_conn_storage = []
+    m_readable_conn_storage = []
+    m_processes_of_interest_storage = []
+    m_conn_of_interest = []
+
     def getProcesses(self):
+        self.m_processes.clear()
+
         path = "/proc"
         dirs = os.listdir(path)
         for file in dirs:
@@ -36,7 +44,18 @@ class MyExtractor:
                 self.loadProcData(proc)
                 self.m_processes.append(proc)
 
-        return self.m_processes
+    def getProcessesOfInterest(self, pid, ppid, uid):
+        self.m_processes.clear()
+
+        path = "/proc"
+        dirs = os.listdir(path)
+        for file in dirs:
+            if file.isnumeric():
+                proc = Process()
+                proc.m_pid = file
+                self.loadProcData(proc)
+                if proc.m_pid in str(pid) or proc.m_ppid in str(ppid) or proc.m_uid in str(uid):
+                    self.m_processes.append(proc)
 
     @staticmethod
     def loadProcData(proc):
@@ -66,13 +85,23 @@ class MyExtractor:
         line = loadLineToProcess(1, full_path)
         proc.m_comm = line
 
-    def printProcesses(self):
+    def printProcesses(self, table_num, full):
         t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm'])
-        for process in self.m_processes:
-            t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'), str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'), str(process.m_comm).rstrip('\n')])
+
+        if full:
+            tmp = self.m_processes_storage
+        else:
+            tmp = self.m_processes_of_interest_storage
+        for process in tmp[table_num]:
+            t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'),
+                       str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'),
+                       str(process.m_comm).rstrip('\n')])
         print(t)
 
     def getNetworkConn(self):
+        self.m_raw_network_conn.clear()
+        self.m_readable_conn.clear()
+
         path = "/proc/net"
 
         full_path = path + "/tcp"
@@ -89,6 +118,14 @@ class MyExtractor:
 
         readable_table += readable_table_udp
         self.m_readable_conn = list(map(list, readable_table))
+
+    def GetConnOfInterest(self, tcp, sl, local, remote, status):
+        self.getNetworkConn()
+        tmp = []
+        for connection in self.m_readable_conn:
+            if connection[0] in tcp or str(connection[1]).strip(":") in sl or connection[2].split(":")[0] in local or connection[3].split(":")[0] in remote or connection[4] in status:
+                tmp.append(connection.copy())
+        self.m_conn_of_interest.append(tmp.copy())
 
     @staticmethod
     def formatTcpUdpTable(raw_table, table_type):
@@ -121,7 +158,8 @@ class MyExtractor:
     def printNetworkConn(self):
         t = PrettyTable(['Type', 'sl', 'local_addr', 'remoote_addr', 'status', 'tx-queue', 'rx-queue'])
         for connection in self.m_readable_conn:
-            t.add_row([connection[0], connection[1],  connection[2], connection[3], connection[4], connection[5], connection[6]])
+            t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], connection[5],
+                       connection[6]])
         print(t)
 
     @staticmethod
@@ -135,11 +173,24 @@ class MyExtractor:
         self.fileCopy("/var/log/kern.log", "/home/dreadpirateroberts/Desktop/forensX-volume/kern.log")
         self.fileCopy("/var/log/faillog", "/home/dreadpirateroberts/Desktop/forensX-volume/faillog")
 
+    def store_processes(self, full):
+        tmp = self.m_processes.copy()
+        if full:
+            self.m_processes_storage.append(tmp)
+        else:
+            self.m_processes_of_interest_storage.append(tmp)
+
+    def store_connections(self):  # moze byt zle - nekontroloval som este
+        tmp = self.m_raw_network_conn.copy()
+        self.m_raw_network_conn_storage.append(tmp)
+        tmp = self.m_readable_conn.copy()
+        self.m_readable_conn_storage.append(tmp)
+
 
 class Process:
     m_pid = 0
     m_comm = ""
-    m_uid = 0
+    m_uid = ""
     m_wchan = ""
-    m_ppid = 0
+    m_ppid = ""
     m_state = ""
