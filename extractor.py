@@ -30,7 +30,7 @@ class MyExtractor:
     m_raw_network_conn_storage = []
     m_readable_conn_storage = []
     m_processes_of_interest_storage = []
-    m_conn_of_interest = []
+    m_conn_of_interest_storage = []
 
     def getProcesses(self):
         self.m_processes.clear()
@@ -71,7 +71,12 @@ class MyExtractor:
         line = loadLineToProcess(3, full_path)
         proc.m_state = line
         proc.m_state = str(proc.m_state).rstrip('\n')
-        proc.m_state = proc.m_state.split(" ")[1]
+
+        proc.m_state = proc.m_state.split(" ")
+        if len(proc.m_state) > 1:
+            proc.m_state = proc.m_state[1]
+        else:
+            proc.m_state = "(Zombie)"
 
         full_path = path + "/" + proc.m_pid + "/loginuid"
         line = loadLineToProcess(1, full_path)
@@ -86,6 +91,8 @@ class MyExtractor:
         proc.m_comm = line
 
     def printProcesses(self, table_num, full):
+        if table_num < 0:
+            return
         t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm'])
 
         if full:
@@ -123,9 +130,10 @@ class MyExtractor:
         self.getNetworkConn()
         tmp = []
         for connection in self.m_readable_conn:
-            if connection[0] in tcp or str(connection[1]).strip(":") in sl or connection[2].split(":")[0] in local or connection[3].split(":")[0] in remote or connection[4] in status:
+            if connection[0] in tcp or str(connection[1]).strip(":") in sl or connection[2].split(":")[0] in local \
+                    or connection[3].split(":")[0] in remote or connection[4] in status:
                 tmp.append(connection.copy())
-        self.m_conn_of_interest.append(tmp.copy())
+        self.m_conn_of_interest_storage.append(tmp.copy())
 
     @staticmethod
     def formatTcpUdpTable(raw_table, table_type):
@@ -155,9 +163,15 @@ class MyExtractor:
             conn.insert(0, table_type)
         return readable_table
 
-    def printNetworkConn(self):
+    def printNetworkConn(self, table_num, full):
+        if table_num < 0:
+            return
         t = PrettyTable(['Type', 'sl', 'local_addr', 'remoote_addr', 'status', 'tx-queue', 'rx-queue'])
-        for connection in self.m_readable_conn:
+        if full:
+            tmp = self.m_readable_conn_storage
+        else:
+            tmp = self.m_conn_of_interest_storage
+        for connection in tmp[table_num]:
             t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], connection[5],
                        connection[6]])
         print(t)
@@ -180,11 +194,15 @@ class MyExtractor:
         else:
             self.m_processes_of_interest_storage.append(tmp)
 
-    def store_connections(self):  # moze byt zle - nekontroloval som este
-        tmp = self.m_raw_network_conn.copy()
-        self.m_raw_network_conn_storage.append(tmp)
-        tmp = self.m_readable_conn.copy()
-        self.m_readable_conn_storage.append(tmp)
+    def store_connections(self, full):  # moze byt zle - nekontroloval som este
+        if full:
+            tmp = self.m_raw_network_conn.copy()
+            self.m_raw_network_conn_storage.append(tmp)
+            tmp = self.m_readable_conn.copy()
+            self.m_readable_conn_storage.append(tmp)
+        else:
+            tmp = self.m_readable_conn.copy()
+            self.m_conn_of_interest_storage.append(tmp)
 
 
 class Process:
