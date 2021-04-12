@@ -6,7 +6,7 @@ uid = []
 
 tcp = []
 sl = []
-local = ["192.168.1.14"]
+local = []
 remote = []
 status = []
 

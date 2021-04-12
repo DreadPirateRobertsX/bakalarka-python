@@ -1,5 +1,8 @@
 import extractor
 import analyser
+import hasher
+from shutil import copyfile
+import time
 
 pid = []
 ppid = []
@@ -136,4 +139,17 @@ def forensx_init_da():
     exit(0)
 
 
-forensx_init()
+# forensx_init()
+
+print("zacinam")
+copyfile("/home/dreadpirateroberts/Desktop/hash_test.txt", "/home/test.txt")
+print("koniec")
+
+hasher.test("/home/dreadpirateroberts/Desktop/hash_test.txt")
+hasher.test("/home/test.txt")
+
+# start = time.perf_counter()
+# hasher.test()
+# end = time.perf_counter()
+# final = end - start
+# print("Cas: " + str(final))
