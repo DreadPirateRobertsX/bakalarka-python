@@ -146,7 +146,7 @@ class MyExtractor:
             addr_long = int(spltd[0], 16)
             hex(addr_long)
             struct.pack("<L", addr_long)
-            spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))  # '192.168.0.2
+            spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))
             spltd[1] = int(spltd[1], 16)
             local = str(spltd[0]) + ":" + str(spltd[1])
             conn[1] = local
@@ -155,7 +155,7 @@ class MyExtractor:
             addr_long = int(spltd[0], 16)
             hex(addr_long)
             struct.pack("<L", addr_long)
-            spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))  # '192.168.0.2
+            spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))
             spltd[1] = int(spltd[1], 16)
             remote = str(spltd[0]) + ":" + str(spltd[1])
             conn[2] = remote
@@ -194,7 +194,7 @@ class MyExtractor:
         else:
             self.m_processes_of_interest_storage.append(tmp)
 
-    def store_connections(self, full):  # moze byt zle - nekontroloval som este
+    def store_connections(self, full):
         if full:
             tmp = self.m_raw_network_conn.copy()
             self.m_raw_network_conn_storage.append(tmp)

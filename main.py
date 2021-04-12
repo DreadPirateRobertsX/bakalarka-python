@@ -35,12 +35,16 @@ def what_to_analyse():
 def print_full_data():
     print("Pocet tabuliek procesov: " + str(len(extr.m_processes_storage)) + "\n" +
           "Pocet tabuliek sietovych spojeni: " + str(len(extr.m_readable_conn_storage)) + "\n\n")
-    print("Zadajte index tabulky procesov (-1 pre nevypisanie)")
-    a = int(input())
-    print("Zadajte index tabulky sietovych spojeni (-1 pre nevypisanie)")
-    b = int(input())
-    extr.printProcesses(a - 1, True)
-    extr.printNetworkConn(b - 1, True)
+    print("Zadajte index tabulky procesov (ENTER pre nevypisanie)")
+    a = input()
+    if a == '':
+        a = -1
+    print("Zadajte index tabulky sietovych spojeni (ENTER pre nevypisanie)")
+    b = input()
+    if b == '':
+        b = -1
+    extr.printProcesses(int(a) - 1, True)
+    extr.printNetworkConn(int(b) - 1, True)
 
 
 def network_analysis():
