@@ -1,15 +1,5 @@
 from time import sleep
 
-pid = []
-ppid = []
-uid = []
-
-tcp = []
-sl = []
-local = []
-remote = []
-status = []
-
 
 def analyse_processes(extracted, num, interval):
     extracted.m_processes_of_interest_storage.clear()
@@ -43,6 +33,9 @@ def analyse_network_conn(extracted, num, interval):
     print("Zadate hodnoty remote-address oddelene medzerou (ENTER pre nespecifikovanie)")
     x = input()
     remote = value_parser(x)
+    print("Zadate hodnoty status oddelene medzerou (ENTER pre nespecifikovanie)")
+    x = input()
+    status = value_parser(x)
     for i in range(0, int(num)):
         extracted.GetConnOfInterest(tcp, sl, local, remote, status)
         extracted.printNetworkConn(i, False)

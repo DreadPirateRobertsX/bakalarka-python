@@ -3,9 +3,15 @@ import socket
 import struct
 from prettytable import PrettyTable
 from shutil import copyfile
+import os.path
+from os import path
 
 
 def loadLineToProcess(num, full_path):
+    if not path.exists(full_path):
+        print("Vstpny subor neexistuje!" + " " + full_path)
+        return
+
     file_ob = open(full_path).readlines()
     line = ""
     for i, line in enumerate(file_ob):
@@ -15,6 +21,10 @@ def loadLineToProcess(num, full_path):
 
 
 def loadFileToArray(full_path):
+    if not path.exists(full_path):
+        print("Vstpny subor neexistuje!" + " " + full_path)
+        return
+
     with open(full_path) as file:
         lines = [line.split() for line in file]
 
@@ -35,8 +45,8 @@ class MyExtractor:
     def getProcesses(self):
         self.m_processes.clear()
 
-        path = "/proc"
-        dirs = os.listdir(path)
+        my_path = "/proc"
+        dirs = os.listdir(my_path)
         for file in dirs:
             if file.isnumeric():
                 proc = Process()
@@ -47,27 +57,27 @@ class MyExtractor:
     def getProcessesOfInterest(self, pid, ppid, uid):
         self.m_processes.clear()
 
-        path = "/proc"
-        dirs = os.listdir(path)
+        my_path = "/proc"
+        dirs = os.listdir(my_path)
         for file in dirs:
             if file.isnumeric():
                 proc = Process()
                 proc.m_pid = file
                 self.loadProcData(proc)
-                if proc.m_pid in str(pid) or proc.m_ppid in str(ppid) or proc.m_uid in str(uid):
+                if proc.m_pid in pid or proc.m_ppid in ppid or proc.m_uid in uid:
                     self.m_processes.append(proc)
 
     @staticmethod
     def loadProcData(proc):
-        path = "/proc"
+        my_path = "/proc"
 
-        full_path = path + "/" + proc.m_pid + "/status"
+        full_path = my_path + "/" + proc.m_pid + "/status"
         line = loadLineToProcess(7, full_path)
         proc.m_ppid = line
         tmp = str(proc.m_pid).strip(' ')
         proc.m_ppid = tmp[0]
 
-        full_path = path + "/" + proc.m_pid + "/status"
+        full_path = my_path + "/" + proc.m_pid + "/status"
         line = loadLineToProcess(3, full_path)
         proc.m_state = line
         proc.m_state = str(proc.m_state).rstrip('\n')
@@ -78,15 +88,15 @@ class MyExtractor:
         else:
             proc.m_state = "(Zombie)"
 
-        full_path = path + "/" + proc.m_pid + "/loginuid"
+        full_path = my_path + "/" + proc.m_pid + "/loginuid"
         line = loadLineToProcess(1, full_path)
         proc.m_uid = line
 
-        full_path = path + "/" + proc.m_pid + "/wchan"
+        full_path = my_path + "/" + proc.m_pid + "/wchan"
         line = loadLineToProcess(1, full_path)
         proc.m_wchan = line
 
-        full_path = path + "/" + proc.m_pid + "/comm"
+        full_path = my_path + "/" + proc.m_pid + "/comm"
         line = loadLineToProcess(1, full_path)
         proc.m_comm = line
 
@@ -109,15 +119,15 @@ class MyExtractor:
         self.m_raw_network_conn.clear()
         self.m_readable_conn.clear()
 
-        path = "/proc/net"
+        my_path = "/proc/net"
 
-        full_path = path + "/tcp"
+        full_path = my_path + "/tcp"
         raw_network_conn = loadFileToArray(full_path)
         del raw_network_conn[0]
         self.m_raw_network_conn = list(map(list, raw_network_conn))
         readable_table = self.formatTcpUdpTable(raw_network_conn, "TCP")
 
-        full_path = path + "/udp"
+        full_path = my_path + "/udp"
         raw_network_conn = loadFileToArray(full_path)
         del raw_network_conn[0]
         self.m_raw_network_conn += raw_network_conn
@@ -178,14 +188,27 @@ class MyExtractor:
 
     @staticmethod
     def fileCopy(src, dst):
-        copyfile(src, dst)
+        if path.exists(src):
+            copyfile(src, dst)
+        else:
+            print("Vstpny subor neexistuje!" + " " + src)
 
-    def exportLogs(self):
-        self.fileCopy("/var/log/syslog", "/home/dreadpirateroberts/Desktop/forensX-volume/syslog")
-        self.fileCopy("/var/log/auth.log", "/home/dreadpirateroberts/Desktop/forensX-volume/auth.log")
-        self.fileCopy("/var/log/boot.log", "/home/dreadpirateroberts/Desktop/forensX-volume/boot.log")
-        self.fileCopy("/var/log/kern.log", "/home/dreadpirateroberts/Desktop/forensX-volume/kern.log")
-        self.fileCopy("/var/log/faillog", "/home/dreadpirateroberts/Desktop/forensX-volume/faillog")
+    def exportLogs(self, hasher):
+        if path.exists("/var/log/syslog"):
+            self.fileCopy("/var/log/syslog", "/home/dreadpirateroberts/Desktop/forensX-volume/syslog")
+            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/syslog", True, "3")
+        if path.exists("/var/log/auth.log"):
+            self.fileCopy("/var/log/auth.log", "/home/dreadpirateroberts/Desktop/forensX-volume/auth.log")
+            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/auth.log", True, "3")
+        if path.exists("/var/log/boot.log"):
+            self.fileCopy("/var/log/boot.log", "/home/dreadpirateroberts/Desktop/forensX-volume/boot.log")
+            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/boot.log", True, "3")
+        if path.exists("/var/log/kern.log"):
+            self.fileCopy("/var/log/kern.log", "/home/dreadpirateroberts/Desktop/forensX-volume/kern.log")
+            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/kern.log", True, "3")
+        if path.exists("/var/log/faillog"):
+            self.fileCopy("/var/log/faillog", "/home/dreadpirateroberts/Desktop/forensX-volume/faillog")
+            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/faillog", True, "3")
 
     def store_processes(self, full):
         tmp = self.m_processes.copy()
