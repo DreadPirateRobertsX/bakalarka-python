@@ -15,11 +15,10 @@ def analyse_processes(extracted, num, interval):
     x = input()
     uid = value_parser(x)
     for i in range(0, int(num)):
-        extracted.getProcessesOfInterest(pid, ppid, uid)
+        extracted.getProcessesOfInterest(pid, ppid, uid, float(interval))
         extracted.store_processes(False)
-
         extracted.printProcesses(i, False)
-        sleep(float(interval))
+
 
 
 def analyse_network_conn(extracted, num, interval):

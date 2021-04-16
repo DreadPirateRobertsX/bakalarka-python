@@ -6,6 +6,8 @@ from shutil import copyfile
 import os.path
 import psutil
 from os import path
+from time import sleep
+from math import floor, ceil
 
 
 def loadLineToProcess(num, full_path):
@@ -72,8 +74,10 @@ class MyExtractor:
                 self.loadProcData(proc)
                 self.m_processes.append(proc)
 
-    def getProcessesOfInterest(self, pid, ppid, uid):
+    def getProcessesOfInterest(self, pid, ppid, uid, interval):
         self.m_processes.clear()
+        helper = 0
+        var = []
         my_path = "/proc"
         dirs = os.listdir(my_path)
         for file in dirs:
@@ -82,10 +86,18 @@ class MyExtractor:
                 proc.m_pid = file
                 self.loadProcData(proc)
                 if proc.m_pid in pid or proc.m_ppid in ppid or proc.m_uid in uid:
-                    p = psutil.Process(int(proc.m_pid))
-                    proc.m_cpu_usage = p.cpu_percent(interval=0)
-                    proc.m_ram_usage = int(p.memory_full_info().uss/(1024*1024))
+                    var.append(psutil.Process(int(proc.m_pid)))
+                    var[helper].cpu_percent(interval=0)
+                    helper += 1
+
+                    # proc.m_cpu_usage = p.cpu_percent(interval=0)
+                    # proc.m_ram_usage = p.memory_percent()   !! nezabudni
                     self.m_processes.append(proc)
+        sleep(interval)
+
+        for v, proc in zip(var, self.m_processes):
+            proc.m_cpu_usage = v.cpu_percent(interval=0)
+            proc.m_ram_usage = v.memory_percent(memtype="rss")
 
     @staticmethod
     def loadProcData(proc):
@@ -133,11 +145,11 @@ class MyExtractor:
                            str(process.m_comm).rstrip('\n')])
         else:
             tmp = self.m_processes_of_interest_storage
-            t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm', 'CPU %', "MEM MB"])
+            t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm', 'CPU %', "MEM %"])
             for process in tmp[table_num]:
                 t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'),
                            str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'),
-                           str(process.m_comm).rstrip('\n'), process.m_cpu_usage, process.m_ram_usage])
+                           str(process.m_comm).rstrip('\n'), process.m_cpu_usage, floor(process.m_ram_usage*100)/100])
 
         print(t)
 

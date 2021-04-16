@@ -2,6 +2,8 @@ import extractor
 import analyser
 import hasher
 import psutil
+from time import sleep
+from sys import getsizeof
 
 pid = []
 ppid = []
