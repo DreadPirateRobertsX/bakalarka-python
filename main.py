@@ -1,6 +1,7 @@
 import extractor
 import analyser
 import hasher
+import psutil
 
 pid = []
 ppid = []
@@ -112,9 +113,9 @@ def file_acquisition():
     print("Ziadne: 0")
     hash_type = input()
 
-    extr.fileCopy(path, "/home/dreadpirateroberts/Desktop/forensX-volume/"+name)
+    extr.fileCopy(path, "/home/dreadpirateroberts/Desktop/forensX-volume/" + name)
     if hash_type != "0":
-        hshr.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/"+name, True, hash_type)
+        hshr.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/" + name, True, hash_type)
     forensx_init()
 
 
@@ -161,11 +162,12 @@ def analyse():
     print("Vypisat ziskane data: 1")
     print("Analyza procesov: 2")
     print("Analyza sietovych spojeni: 3")
+    print("Spojenie socketu s procesom: 4")
     print("naspat: 0")
 
     a = ""
 
-    while a != "0":
+    while a != "1" and a != "2" and a != "3" and a != "4":
         a = input()
         if a == "1":
             print_full_data()
@@ -174,6 +176,8 @@ def analyse():
             process_analysis()
         elif a == "3":
             network_analysis()
+        elif a == "4":
+            analyser.network_conn_init(extr)
         else:
             print("Neplatny vstup")
     forensx_init()
@@ -194,37 +198,23 @@ def forensx_init():
             hash_functions()
         elif a == "3":
             analyse()
+        elif a == "0":
+            break
         else:
             print("Neplatny vstup")
     exit(0)
 
 
-# def forensx_init_da():
-#     print("Pre zber dat stlacte: 1")
-#     print("Pre overenie integrity stlacte: 2")
-#     print("Pre ukoncenie programu stlacte: 0")
-#
-#     a = ""
-#
-#     while a != "0":
-#         a = input()
-#         if a == "1":
-#             data_acquisition()
-#         elif a == "2":
-#             hash_functions()
-#         elif a == "4":
-#             print_full_data()
-#             what_to_analyse()
-#         elif a == "5":
-#             process_analysis()
-#         elif a == "6":
-#             network_analysis()
-#         else:
-#             print("Neplatny vstup")
-#     exit(0)
-
+print(" ______                      __   __")
+print("|  ____|                     \\ \\ / /")
+print("| |__ ___  _ __ ___ _ __  ___ \\ V / ")
+print("|  __/ _ \\| '__/ _ \\ '_ \\/ __| > <")
+print("| | | (_) | | |  __/ | | \\__ \\/ . \\")
+print("|_|  \\___/|_|  \\___|_| |_|___/_/ \\_\\")
+print("\n")
 
 forensx_init()
+
 # a = analyser.value_parser("2 11 23")
 # print(a)
 # print("zacinam")

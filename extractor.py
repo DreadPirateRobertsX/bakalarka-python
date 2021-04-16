@@ -4,6 +4,7 @@ import struct
 from prettytable import PrettyTable
 from shutil import copyfile
 import os.path
+import psutil
 from os import path
 
 
@@ -31,6 +32,23 @@ def loadFileToArray(full_path):
     return lines
 
 
+def getPIDs():
+    pids = []
+    my_path = "/proc"
+    dirs = os.listdir(my_path)
+    for file in dirs:
+        if file.isnumeric():
+            pids.append(file)
+    return pids
+
+
+def comm_from_pid(pid):
+    full_path = "/proc/" + str(pid) + "/comm"
+    comm = loadLineToProcess(1, full_path)
+
+    return comm
+
+
 class MyExtractor:
     m_processes = []
     m_raw_network_conn = []
@@ -56,7 +74,6 @@ class MyExtractor:
 
     def getProcessesOfInterest(self, pid, ppid, uid):
         self.m_processes.clear()
-
         my_path = "/proc"
         dirs = os.listdir(my_path)
         for file in dirs:
@@ -65,6 +82,9 @@ class MyExtractor:
                 proc.m_pid = file
                 self.loadProcData(proc)
                 if proc.m_pid in pid or proc.m_ppid in ppid or proc.m_uid in uid:
+                    p = psutil.Process(int(proc.m_pid))
+                    proc.m_cpu_usage = p.cpu_percent(interval=0)
+                    proc.m_ram_usage = int(p.memory_full_info().uss/(1024*1024))
                     self.m_processes.append(proc)
 
     @staticmethod
@@ -103,16 +123,22 @@ class MyExtractor:
     def printProcesses(self, table_num, full):
         if table_num < 0:
             return
-        t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm'])
 
         if full:
             tmp = self.m_processes_storage
+            t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm'])
+            for process in tmp[table_num]:
+                t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'),
+                           str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'),
+                           str(process.m_comm).rstrip('\n')])
         else:
             tmp = self.m_processes_of_interest_storage
-        for process in tmp[table_num]:
-            t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'),
-                       str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'),
-                       str(process.m_comm).rstrip('\n')])
+            t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm', 'CPU %', "MEM MB"])
+            for process in tmp[table_num]:
+                t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'),
+                           str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'),
+                           str(process.m_comm).rstrip('\n'), process.m_cpu_usage, process.m_ram_usage])
+
         print(t)
 
     def getNetworkConn(self):
@@ -186,6 +212,23 @@ class MyExtractor:
                        connection[6]])
         print(t)
 
+    def printConnInit(self, result_sls, result_pids):
+        pid = "-"
+        t = PrettyTable(
+            ['Type', 'sl', 'local_addr', 'remoote_addr', 'status', 'tx-queue', 'rx-queue', 'process', 'PID'])
+        comm = "-"
+        for connection in self.m_readable_conn:
+            if str(connection[1]) in result_sls:
+                for sl, pid in zip(result_sls, result_pids):
+                    if sl == connection[1]:
+                        comm = comm_from_pid(pid)
+                        break
+
+            t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], connection[5],
+                       connection[6], comm, pid])
+            comm = "-"
+        print(t)
+
     @staticmethod
     def fileCopy(src, dst):
         if path.exists(src):
@@ -235,3 +278,5 @@ class Process:
     m_wchan = ""
     m_ppid = ""
     m_state = ""
+    m_cpu_usage = ""
+    m_ram_usage = ""
