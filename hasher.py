@@ -9,7 +9,7 @@ class HashStorage:
     def store_hash(self, src, store, hash_type):
         if not path.exists(src):
             print("Vstpny subor neexistuje!" + " " + src)
-            return
+            return ""
 
         bffer = 1024 * 64
 
@@ -30,7 +30,7 @@ class HashStorage:
             self.storage.append(my_hash.hexdigest())
             self.names.append(src)
         else:
-            return my_hash.hexdigest()
+            return str(my_hash.hexdigest())
 
     def compare_files(self, f1, f2):
         if not path.exists(f1):
@@ -48,3 +48,5 @@ class HashStorage:
     def print_hashes(self):
         for i, x in zip(self.names, self.storage):
             print(i + " " + x)
+
+    # def one_file_hash(self, full_path):

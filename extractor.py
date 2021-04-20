@@ -1,4 +1,5 @@
 import os
+import time
 import socket
 import struct
 from prettytable import PrettyTable
@@ -6,8 +7,8 @@ from shutil import copyfile
 import os.path
 import psutil
 from os import path
-from time import sleep
-from math import floor, ceil
+# from time import sleep, time
+from math import floor
 
 
 def loadLineToProcess(num, full_path):
@@ -93,11 +94,17 @@ class MyExtractor:
                     # proc.m_cpu_usage = p.cpu_percent(interval=0)
                     # proc.m_ram_usage = p.memory_percent()   !! nezabudni
                     self.m_processes.append(proc)
-        sleep(interval)
+        time.sleep(interval)
 
         for v, proc in zip(var, self.m_processes):
-            proc.m_cpu_usage = v.cpu_percent(interval=0)
-            proc.m_ram_usage = v.memory_percent(memtype="rss")
+            try:
+                proc.m_cpu_usage = v.cpu_percent(interval=0)
+            except:
+                proc.m_cpu_usage = "-"
+            try:
+                proc.m_ram_usage = v.memory_percent()
+            except:
+                proc.m_ram_usage = "-"
 
     @staticmethod
     def loadProcData(proc):
@@ -132,17 +139,25 @@ class MyExtractor:
         line = loadLineToProcess(1, full_path)
         proc.m_comm = line
 
+        try:
+            p = psutil.Process(int(proc.m_pid))
+            p.create_time()
+            proc.m_start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.create_time()))
+        except:
+            start_time = "-"
+            pass
+
     def printProcesses(self, table_num, full):
         if table_num < 0:
             return
-
+        start_time = "-"
         if full:
             tmp = self.m_processes_storage
-            t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm'])
+            t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm', 'Start time'])
             for process in tmp[table_num]:
                 t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'),
                            str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'),
-                           str(process.m_comm).rstrip('\n')])
+                           str(process.m_comm).rstrip('\n'), str(process.m_start_time)])
         else:
             tmp = self.m_processes_of_interest_storage
             t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm', 'CPU %', "MEM %"])
@@ -290,5 +305,6 @@ class Process:
     m_wchan = ""
     m_ppid = ""
     m_state = ""
+    m_start_time =  ""
     m_cpu_usage = ""
     m_ram_usage = ""

@@ -1,9 +1,6 @@
 import extractor
 import analyser
 import hasher
-import psutil
-from time import sleep
-from sys import getsizeof
 
 pid = []
 ppid = []
@@ -35,6 +32,7 @@ def what_to_analyse():
             network_analysis()
         else:
             print("Neplatny vstup")
+    forensx_init()
 
 
 def hash_file_compare():
@@ -44,7 +42,6 @@ def hash_file_compare():
     f2 = input()
 
     hshr.compare_files(f1, f2)
-    analyse()
 
 
 def hash_functions():
@@ -54,12 +51,14 @@ def hash_functions():
     print("Menu: 0")
     a = ""
 
-    while a != "1" and a != "0":
+    while a != "1" and a != "0" and a != "2" and a != "3":
         a = input()
         if a == "1":
             hshr.print_hashes()
         elif a == "2":
             hash_file_compare()
+        elif a == "3":
+            hash_file()
         elif a == "0":
             forensx_init()
         else:
@@ -121,6 +120,27 @@ def file_acquisition():
     forensx_init()
 
 
+def hash_file():
+    types = ["1", "2", "3"]
+    print("Zadajte cestu k suboru: ")
+    path = input()
+    print("Zadate sposob hash-ovania")
+    print("MD5: 1")
+    print("SHA1: 2")
+    print("SHA256: 3")
+    hash_type = ""
+    while hash_type != "1" and hash_type != "2" and hash_type != "3":
+        hash_type = input()
+        if hash_type not in types:
+            print("Neplatny vstup")
+
+    my_hash = hshr.store_hash(path, False, hash_type)
+    hshr.storage.append(my_hash)
+    hshr.names.append(path)
+    print(path + " " + my_hash)
+    forensx_init()
+
+
 def data_acquisition():
     print("Extrahovat zakladne data: 1")
     print("Extrahovat konkretny subor: 2")
@@ -149,7 +169,7 @@ def data_acquisition():
 def print_data():
     a = ""
     while a != "Y" and a != "y" and a != "n":
-        print("Vypisat data? (Y/n)")
+        print("Vypisat data? - Tabulky procesov a sietove spojenia (Y/n)")
         a = input()
         if a == "Y" or a == "y":
             print_full_data()
@@ -180,6 +200,8 @@ def analyse():
             network_analysis()
         elif a == "4":
             analyser.network_conn_init(extr)
+        elif a == "0":
+            forensx_init()
         else:
             print("Neplatny vstup")
     forensx_init()
