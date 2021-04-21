@@ -272,8 +272,16 @@ def print_users():
 
 
 def show_file(path):
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal zobrazit subor: " + path + "\n")
+    file.close()
+
     with open(path, 'r') as file:
         print(file.read())
+
 
 def analyse():
     print("Vypisat ziskane data: 1")
@@ -306,13 +314,6 @@ def analyse():
             print_users()
         elif a == "6":
             show_file("/proc/net/arp")
-
-            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
-            now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-            file.write("\n" + dt_string)
-            file.write(" - Analytik si vyziadal zobrazit ARP tabulku\n")
-            file.close()
 
             print("Ulozit?(Y/n)\n")
             x = input()
@@ -360,7 +361,7 @@ def forensx_init():
     file.write(" - Koniec programu - Vypis ziskanych hash-ov\n")
     file.close()
     hshr.print_hashes(False)
-    exit(0)
+    return
 
 
 print(" ______                      __   __")
