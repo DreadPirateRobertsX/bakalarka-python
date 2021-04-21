@@ -4,10 +4,12 @@ import os
 import hasher
 from datetime import datetime
 
+_LOGS_EXTRACTED = False
 print("Zadate nazov pripadu")
 _CASE_NAME = input()
 print("Zadajte vystupnu cestu")
 _OUTPUT_PATH = input()
+_OUTPUT_PATH += _CASE_NAME + "/"
 _OUTPUT_PATH = "/home/dreadpirateroberts/Desktop/forensX-volume/" + _CASE_NAME + "/"
 
 directory = os.path.dirname(_OUTPUT_PATH + "Protokol/" + _CASE_NAME)
@@ -30,25 +32,6 @@ status = []
 
 extr = extractor.MyExtractor(_OUTPUT_PATH, _CASE_NAME)
 hshr = hasher.HashStorage(_OUTPUT_PATH, _CASE_NAME)
-
-
-def what_to_analyse():
-    a = ""
-    while a != "1" and a != "2" and a != "0":
-        print("Analyza procesov: 1")
-        print("Analyza sietovych spojeni: 2")
-        print("Menu: 0")
-        a = input()
-
-        if a == "0":
-            forensx_init()
-        elif a == "1":
-            process_analysis()
-        elif a == "2":
-            network_analysis()
-        else:
-            print("Neplatny vstup")
-    forensx_init()
 
 
 def hash_file_compare():
@@ -90,10 +73,10 @@ def hash_functions():
         elif a == "3":
             hash_file()
         elif a == "0":
-            forensx_init()
+            return
         else:
             print("Neplatny vstup")
-    forensx_init()
+    return
 
 
 def print_full_data():
@@ -134,10 +117,11 @@ def network_analysis():
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     file.write("\n" + dt_string)
-    file.write(" - Analytik si vyziadal vypis " + num + " tabuliek sietovych spojeni v casovom intervale " + interval + ". sek\n")
+    file.write(
+        " - Analytik si vyziadal vypis " + num + " tabuliek sietovych spojeni v casovom intervale " + interval + ". sek\n")
     file.close()
     analyser.analyse_network_conn(extr, num, interval)
-    forensx_init()
+    return
 
 
 def process_analysis():
@@ -149,10 +133,11 @@ def process_analysis():
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     file.write("\n" + dt_string)
-    file.write(" - Analytik si vyziadal vypis " + num + " tabuliek procesov v casovom intervale " +  interval + ". sek\n")
+    file.write(
+        " - Analytik si vyziadal vypis " + num + " tabuliek procesov v casovom intervale " + interval + ". sek\n")
     file.close()
     analyser.analyse_processes(extr, num, interval)
-    forensx_init()
+    return
 
 
 def file_acquisition():
@@ -177,15 +162,7 @@ def file_acquisition():
     extr.fileCopy(path, _OUTPUT_PATH + name)
     if hash_type != "0":
         hshr.store_hash(_OUTPUT_PATH + name, True, hash_type)
-
-    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    file.write("\n" + dt_string)
-    file.write(" - Subor " + str(path) + " bol  uspesne extrahovany")
-    file.close()
-
-    forensx_init()
+    return
 
 
 def hash_file():
@@ -212,12 +189,13 @@ def hash_file():
     hshr.storage.append(my_hash)
     hshr.names.append(path)
     print(path + " " + my_hash)
-    file.write("\n" + path + " " + my_hash)
+    file.write("\n" + path + " " + my_hash + "\n")
     file.close()
-    forensx_init()
+    return
 
 
 def data_acquisition():
+    global _LOGS_EXTRACTED
     print("Extrahovat zakladne data: 1")
     print("Extrahovat konkretny subor: 2")
     print("Naspat: 0")
@@ -238,14 +216,30 @@ def data_acquisition():
             extr.getNetworkConn()
             extr.store_connections(True)
 
-            extr.exportLogs(hshr)
-
+            if not _LOGS_EXTRACTED:
+                extr.exportLogs(hshr)
+                _LOGS_EXTRACTED = True
+            else:
+                print("Prajete si znova stiahnut subory s Logmi? - Povodne kopie sa prepisu (Y/n)")
+                a = input()
+                if a == "Y" or a == "y":
+                    extr.exportLogs(hshr)
+            extr.extract_command_history(hshr)
+            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Extrahovana historia prikazov vsetkych pouzivatelov:\n")
+            for usr in extr.m_users:
+                file.write(" " + str(usr) + "; ")
+            file.write(" root;\n")
+            file.close()
             print_data()
 
         elif a == "2":
             file_acquisition()
         elif a == "0":
-            forensx_init()
+            return
         else:
             print("Neplatny vstup")
 
@@ -258,22 +252,41 @@ def print_data():
         if a == "Y" or a == "y":
             print_full_data()
         elif a == "n":
-            forensx_init()
+            return
         else:
             print("Neplatny vstup")
-    forensx_init()
+    return
 
+
+def print_users():
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal zobrazit pouzivatelov s uid\n")
+
+    for usr, u_uid in zip(extr.m_users, extr.m_uids):
+        file.write(usr + ':' + u_uid + "\n")
+        print(usr + ':' + u_uid + "\n")
+    file.close()
+
+
+def show_file(path):
+    with open(path, 'r') as file:
+        print(file.read())
 
 def analyse():
     print("Vypisat ziskane data: 1")
     print("Analyza procesov: 2")
     print("Analyza sietovych spojeni: 3")
     print("Spojenie socketu s procesom: 4")
+    print("Vypisat pouzivatelov/UID: 5")
+    print("Zobrazit ARP tabulku: 6")
     print("naspat: 0")
 
     a = ""
 
-    while a != "1" and a != "2" and a != "3" and a != "4":
+    while a != "1" and a != "2" and a != "3" and a != "4" and a != "5" and a != "0" and a != "6":
         a = input()
         if a == "1":
             print_full_data()
@@ -289,21 +302,44 @@ def analyse():
             file.write(" - Analytik si vyziadal zobrazit priradenie sietovych spojeni s procesmi ktore ich vytvorili\n")
             file.close()
             analyser.network_conn_init(extr)
+        elif a == "5":
+            print_users()
+        elif a == "6":
+            show_file("/proc/net/arp")
+
+            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Analytik si vyziadal zobrazit ARP tabulku\n")
+            file.close()
+
+            print("Ulozit?(Y/n)\n")
+            x = input()
+            if x == "Y" or x == "y":
+                print("Zadate nazov: ")
+                x = input()
+                direct = os.path.dirname(_OUTPUT_PATH + "ARP/" + x)
+                if not os.path.exists(direct):
+                    os.makedirs(direct)
+
+                extr.fileCopy("/proc/net/arp", _OUTPUT_PATH + "ARP/" + x)
+                hshr.store_hash(_OUTPUT_PATH + "ARP/" + x, True, 3)
+
         elif a == "0":
-            forensx_init()
+            return
         else:
             print("Neplatny vstup")
-    forensx_init()
+    return
 
 
 def forensx_init():
-    print("Pre zber dat stlacte: 1")
-    print("Pre overenie integrity stlacte: 2")
-    print("Pre analyzu dat stlacte: 3")
-    print("Pre ukoncenie programu stlacte: 0")
     a = ""
-
     while a != "0":
+        print("\n\nPre zber dat stlacte: 1")
+        print("Pre overenie integrity stlacte: 2")
+        print("Pre analyzu dat stlacte: 3")
+        print("Pre ukoncenie programu stlacte: 0")
         a = input()
         if a == "1":
             data_acquisition()

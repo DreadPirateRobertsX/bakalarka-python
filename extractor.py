@@ -63,10 +63,13 @@ class MyExtractor():
     m_readable_conn_storage = []
     m_processes_of_interest_storage = []
     m_conn_of_interest_storage = []
+    m_uids = []
 
     def __init__(self, out_path, case_name):
         self._OUTPUT_PATH = out_path
         self._CASE_NAME = case_name
+        self.m_users = os.listdir("/home")
+        self.get_users_uid()
 
     def getProcesses(self):
         self.m_processes.clear()
@@ -263,6 +266,17 @@ class MyExtractor():
         f.close()
         print(t)
 
+    def extract_command_history(self, hasher):
+        full_path = os.path.dirname(self._OUTPUT_PATH + "CommandHistory/")
+        if not os.path.exists(full_path):
+            os.makedirs(full_path)
+        for user in self.m_users:
+            file_path = full_path + "/" + user
+            self.fileCopy("/home/" + str(user) + "/.bash_history", file_path)
+            hasher.store_hash(file_path, True, 3)
+        self.fileCopy("/root/.bash_history", full_path + "/root")
+        hasher.store_hash(full_path + "/root", True, 3)
+
     def printConnInit(self, result_sls, result_pids):
         pid = "-"
         t = PrettyTable(
@@ -284,9 +298,15 @@ class MyExtractor():
         f.close()
         print(t)
 
-    @staticmethod
-    def fileCopy(src, dst):
+    def fileCopy(self, src, dst):
         if path.exists(src):
+            file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Vytvorena kopia suboru: " + src + " \n")
+            file.close()
+
             copyfile(src, dst)
         else:
             print("Vstpny subor neexistuje!" + " " + src)
@@ -332,6 +352,21 @@ class MyExtractor():
         else:
             tmp = self.m_readable_conn.copy()
             self.m_conn_of_interest_storage.append(tmp)
+
+    def get_users_uid(self):
+        f = open("/etc/passwd", "r")
+        lines = f.readlines()
+        for usr in self.m_users:
+            found = False
+            for line in lines:
+                if usr in line:
+                    line = line.split(":")
+                    if line[0] == str(usr):
+                        self.m_uids.append(line[2])
+                        found = True
+                        break
+            if not found:
+                self.m_uids.append("-1")
 
 
 class Process:
