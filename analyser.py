@@ -20,7 +20,6 @@ def analyse_processes(extracted, num, interval):
         extracted.printProcesses(i, False)
 
 
-
 def analyse_network_conn(extracted, num, interval):
     extracted.m_conn_of_interest_storage.clear()
     print("Zadate typ spojenia UDP/TCP (ENTER pre nespecifikovanie)")

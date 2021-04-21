@@ -6,6 +6,10 @@ class HashStorage:
     storage = []
     names = []
 
+    def __init__(self, out_path, case_name):
+        self._OUTPUT_PATH = out_path
+        self._CASE_NAME = case_name
+
     def store_hash(self, src, store, hash_type):
         if not path.exists(src):
             print("Vstpny subor neexistuje!" + " " + src)
@@ -45,8 +49,16 @@ class HashStorage:
         print("Hash1: " + str(hash1))
         print("Hash2: " + str(hash2))
 
-    def print_hashes(self):
-        for i, x in zip(self.names, self.storage):
-            print(i + " " + x)
+        file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        file.write("\nHash1: " + str(hash1))
+        file.write("\nHash2: " + str(hash2))
+        file.close()
 
-    # def one_file_hash(self, full_path):
+    def print_hashes(self, prnt):
+        file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        for i, x in zip(self.names, self.storage):
+            if prnt:
+                print(i + " " + x)
+            file.write("\n" + i + " " + x)
+        file.close()
+

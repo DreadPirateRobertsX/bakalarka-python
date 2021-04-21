@@ -9,6 +9,7 @@ import psutil
 from os import path
 # from time import sleep, time
 from math import floor
+from datetime import datetime
 
 
 def loadLineToProcess(num, full_path):
@@ -52,7 +53,7 @@ def comm_from_pid(pid):
     return comm
 
 
-class MyExtractor:
+class MyExtractor():
     m_processes = []
     m_raw_network_conn = []
     m_readable_conn = []
@@ -62,6 +63,10 @@ class MyExtractor:
     m_readable_conn_storage = []
     m_processes_of_interest_storage = []
     m_conn_of_interest_storage = []
+
+    def __init__(self, out_path, case_name):
+        self._OUTPUT_PATH = out_path
+        self._CASE_NAME = case_name
 
     def getProcesses(self):
         self.m_processes.clear()
@@ -74,6 +79,12 @@ class MyExtractor:
                 proc.m_pid = file
                 self.loadProcData(proc)
                 self.m_processes.append(proc)
+        file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        file.write("\n" + dt_string)
+        file.write(" - Extrahovana tabulka s procesmi\n")
+        file.close()
 
     def getProcessesOfInterest(self, pid, ppid, uid, interval):
         self.m_processes.clear()
@@ -91,8 +102,6 @@ class MyExtractor:
                     var[helper].cpu_percent(interval=0)
                     helper += 1
 
-                    # proc.m_cpu_usage = p.cpu_percent(interval=0)
-                    # proc.m_ram_usage = p.memory_percent()   !! nezabudni
                     self.m_processes.append(proc)
         time.sleep(interval)
 
@@ -164,8 +173,12 @@ class MyExtractor:
             for process in tmp[table_num]:
                 t.add_row([process.m_pid, str(process.m_ppid).rstrip('\n'), str(process.m_state).rstrip('\n'),
                            str(process.m_uid).rstrip('\n'), str(process.m_wchan).rstrip('\n'),
-                           str(process.m_comm).rstrip('\n'), process.m_cpu_usage, floor(process.m_ram_usage*100)/100])
+                           str(process.m_comm).rstrip('\n'), process.m_cpu_usage,
+                           floor(process.m_ram_usage * 100) / 100])
 
+        f = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        f.write("\n" + str(t))
+        f.close()
         print(t)
 
     def getNetworkConn(self):
@@ -188,6 +201,13 @@ class MyExtractor:
 
         readable_table += readable_table_udp
         self.m_readable_conn = list(map(list, readable_table))
+
+        file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        file.write("\n" + dt_string)
+        file.write(" - Extrahovana tabulka so sietovymi spojeniami\n")
+        file.close()
 
     def GetConnOfInterest(self, tcp, sl, local, remote, status):
         self.getNetworkConn()
@@ -237,6 +257,10 @@ class MyExtractor:
         for connection in tmp[table_num]:
             t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], connection[5],
                        connection[6]])
+
+        f = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        f.write("/n" + str(t))
+        f.close()
         print(t)
 
     def printConnInit(self, result_sls, result_pids):
@@ -254,6 +278,10 @@ class MyExtractor:
             t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], connection[5],
                        connection[6], comm, pid])
             comm = "-"
+
+        f = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        f.write("/n" + str(t))
+        f.close()
         print(t)
 
     @staticmethod
@@ -265,20 +293,28 @@ class MyExtractor:
 
     def exportLogs(self, hasher):
         if path.exists("/var/log/syslog"):
-            self.fileCopy("/var/log/syslog", "/home/dreadpirateroberts/Desktop/forensX-volume/syslog")
-            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/syslog", True, "3")
+            self.fileCopy("/var/log/syslog", self._OUTPUT_PATH + "syslog")
+            hasher.store_hash(self._OUTPUT_PATH + "syslog", True, "3")
         if path.exists("/var/log/auth.log"):
-            self.fileCopy("/var/log/auth.log", "/home/dreadpirateroberts/Desktop/forensX-volume/auth.log")
-            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/auth.log", True, "3")
+            self.fileCopy("/var/log/auth.log", self._OUTPUT_PATH + "auth.log")
+            hasher.store_hash(self._OUTPUT_PATH + "auth.log", True, "3")
         if path.exists("/var/log/boot.log"):
-            self.fileCopy("/var/log/boot.log", "/home/dreadpirateroberts/Desktop/forensX-volume/boot.log")
-            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/boot.log", True, "3")
+            self.fileCopy("/var/log/boot.log", self._OUTPUT_PATH + "boot.log")
+            hasher.store_hash(self._OUTPUT_PATH + "boot.log", True, "3")
         if path.exists("/var/log/kern.log"):
-            self.fileCopy("/var/log/kern.log", "/home/dreadpirateroberts/Desktop/forensX-volume/kern.log")
-            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/kern.log", True, "3")
+            self.fileCopy("/var/log/kern.log", self._OUTPUT_PATH + "kern.log")
+            hasher.store_hash(self._OUTPUT_PATH + "kern.log", True, "3")
         if path.exists("/var/log/faillog"):
-            self.fileCopy("/var/log/faillog", "/home/dreadpirateroberts/Desktop/forensX-volume/faillog")
-            hasher.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/faillog", True, "3")
+            self.fileCopy("/var/log/faillog", self._OUTPUT_PATH + "faillog")
+            hasher.store_hash(self._OUTPUT_PATH + "faillog", True, "3")
+
+        file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        file.write("\n" + dt_string)
+        file.write(
+            " - Extrahovane logy: /var/log/syslog; /var/log/auth.log; /var/log/boot.log; /var/log/kern.log; /var/log/faillog; \n")
+        file.close()
 
     def store_processes(self, full):
         tmp = self.m_processes.copy()
@@ -305,6 +341,6 @@ class Process:
     m_wchan = ""
     m_ppid = ""
     m_state = ""
-    m_start_time =  ""
+    m_start_time = ""
     m_cpu_usage = ""
     m_ram_usage = ""

@@ -1,6 +1,22 @@
 import extractor
 import analyser
+import os
 import hasher
+from datetime import datetime
+
+print("Zadate nazov pripadu")
+_CASE_NAME = input()
+print("Zadajte vystupnu cestu")
+_OUTPUT_PATH = input()
+_OUTPUT_PATH = "/home/dreadpirateroberts/Desktop/forensX-volume/" + _CASE_NAME + "/"
+
+directory = os.path.dirname(_OUTPUT_PATH + "Protokol/" + _CASE_NAME)
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+f = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "w")
+f.write(_CASE_NAME + " - " + str(datetime.now()) + "\n")
+f.close()
 
 pid = []
 ppid = []
@@ -12,8 +28,8 @@ local = ["127.0.0.53"]
 remote = []
 status = []
 
-extr = extractor.MyExtractor()
-hshr = hasher.HashStorage()
+extr = extractor.MyExtractor(_OUTPUT_PATH, _CASE_NAME)
+hshr = hasher.HashStorage(_OUTPUT_PATH, _CASE_NAME)
 
 
 def what_to_analyse():
@@ -41,6 +57,13 @@ def hash_file_compare():
     print("Zadate cestu k 2. suboru: ")
     f2 = input()
 
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal porovnanie 2 suborov: " + f1 + " a " + f2)
+    file.close()
+
     hshr.compare_files(f1, f2)
 
 
@@ -54,7 +77,14 @@ def hash_functions():
     while a != "1" and a != "0" and a != "2" and a != "3":
         a = input()
         if a == "1":
-            hshr.print_hashes()
+            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Analytik si vyziadal vypis ziskanych hash-ov")
+            file.close()
+            hshr.print_hashes(True)
+
         elif a == "2":
             hash_file_compare()
         elif a == "3":
@@ -72,23 +102,40 @@ def print_full_data():
     print("Zadajte index tabulky procesov (ENTER pre nevypisanie)")
     a = input()
     if a == '':
-        a = -1
+        a = 0
     print("Zadajte index tabulky sietovych spojeni (ENTER pre nevypisanie)")
     b = input()
     if b == '':
-        b = -1
+        b = 0
+    if a != 0:
+        file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        file.write("\n" + dt_string)
+        file.write(" - Analytik si vyziadal vypis " + str(a) + ". tablky s procesmi\n")
+        file.close()
     extr.printProcesses(int(a) - 1, True)
+    if b != 0:
+        file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        file.write("\n" + dt_string)
+        file.write(" - Analytik si vyziadal vypis " + str(b) + ". tablky so sietovymi spojeniami\n")
+        file.close()
     extr.printNetworkConn(int(b) - 1, True)
 
 
 def network_analysis():
-    # extr.GetConnOfInterest(tcp, sl, local, remote, status)
-    # extr.store_connections()
-    # extr.printNetworkConn(0, False)
     print("Zadajte pocet potrebnych tabuliek(10): ")
     num = input()
     print("Zadajte casovy interval v sekundach(0.3):")
     interval = input()
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal vypis " + num + " tabuliek sietovych spojeni v casovom intervale " + interval + ". sek\n")
+    file.close()
     analyser.analyse_network_conn(extr, num, interval)
     forensx_init()
 
@@ -98,6 +145,12 @@ def process_analysis():
     num = input()
     print("Zadajte casovy interval v sekundach(0.3):")
     interval = input()
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal vypis " + num + " tabuliek procesov v casovom intervale " +  interval + ". sek\n")
+    file.close()
     analyser.analyse_processes(extr, num, interval)
     forensx_init()
 
@@ -114,9 +167,24 @@ def file_acquisition():
     print("Ziadne: 0")
     hash_type = input()
 
-    extr.fileCopy(path, "/home/dreadpirateroberts/Desktop/forensX-volume/" + name)
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal extrahovanie suboru: " + str(path))
+    file.close()
+
+    extr.fileCopy(path, _OUTPUT_PATH + name)
     if hash_type != "0":
-        hshr.store_hash("/home/dreadpirateroberts/Desktop/forensX-volume/" + name, True, hash_type)
+        hshr.store_hash(_OUTPUT_PATH + name, True, hash_type)
+
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Subor " + str(path) + " bol  uspesne extrahovany")
+    file.close()
+
     forensx_init()
 
 
@@ -134,10 +202,18 @@ def hash_file():
         if hash_type not in types:
             print("Neplatny vstup")
 
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal vytvorenie hash-u pre subor: " + str(path))
+
     my_hash = hshr.store_hash(path, False, hash_type)
     hshr.storage.append(my_hash)
     hshr.names.append(path)
     print(path + " " + my_hash)
+    file.write("\n" + path + " " + my_hash)
+    file.close()
     forensx_init()
 
 
@@ -149,6 +225,13 @@ def data_acquisition():
     while a != "0" and a != "1" and a != "2":
         a = input()
         if a == "1":
+            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Ziadost o extrahovanie zakladnych dat\n")
+            file.close()
+
             extr.getProcesses()
             extr.store_processes(True)
 
@@ -158,6 +241,7 @@ def data_acquisition():
             extr.exportLogs(hshr)
 
             print_data()
+
         elif a == "2":
             file_acquisition()
         elif a == "0":
@@ -173,11 +257,11 @@ def print_data():
         a = input()
         if a == "Y" or a == "y":
             print_full_data()
-            what_to_analyse()
         elif a == "n":
             forensx_init()
         else:
             print("Neplatny vstup")
+    forensx_init()
 
 
 def analyse():
@@ -193,12 +277,17 @@ def analyse():
         a = input()
         if a == "1":
             print_full_data()
-            what_to_analyse()
         elif a == "2":
             process_analysis()
         elif a == "3":
             network_analysis()
         elif a == "4":
+            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Analytik si vyziadal zobrazit priradenie sietovych spojeni s procesmi ktore ich vytvorili\n")
+            file.close()
             analyser.network_conn_init(extr)
         elif a == "0":
             forensx_init()
@@ -226,6 +315,15 @@ def forensx_init():
             break
         else:
             print("Neplatny vstup")
+
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    file.write("\n\n\n" + dt_string)
+    file.write(" - Koniec programu - Vypis ziskanych hash-ov\n")
+    file.close()
+    hshr.print_hashes(False)
     exit(0)
 
 
@@ -238,21 +336,3 @@ print("|_|  \\___/|_|  \\___|_| |_|___/_/ \\_\\")
 print("\n")
 
 forensx_init()
-
-# a = analyser.value_parser("2 11 23")
-# print(a)
-# print("zacinam")
-# start = time.perf_counter
-# end = time.perf_counter()
-# final = end - start
-# print("Cas: " + str(final))
-# print("koniec")
-
-# hasher.test("/home/dreadpirateroberts/Desktop/hash_test.txt")
-# hasher.test("/home/test.txt")
-
-# start = time.perf_counter()
-# hasher.test()
-# end = time.perf_counter()
-# final = end - start
-# print("Cas: " + str(final))
