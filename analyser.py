@@ -1,6 +1,7 @@
 from time import sleep
 import os
 import extractor
+from datetime import datetime
 
 
 def analyse_processes(extracted, num, interval):
@@ -71,6 +72,27 @@ def network_conn_init(extracted):
 
 def value_parser(string_values):
     return string_values.split(' ').copy()
+
+
+def find_string(string, path, _OUTPUT_PATH, _CASE_NAME):
+    if not os.path.exists(path):
+        print("Hladany subor neexistuje!")
+        return
+
+    i = 0
+    prot = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    prot.write("\n" + dt_string)
+
+    with open(path) as file:
+        for line in file:
+            if string in line:
+                print(str(i) + ": " + line)
+                prot.write(str(i) + ": " + line)
+            i += 1
+    prot.write("\n")
+    prot.close()
 
 
 def get_nc_inode(extr):

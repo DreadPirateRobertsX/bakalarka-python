@@ -299,11 +299,13 @@ def analyse():
     print("Spojenie socketu s procesom: 4")
     print("Vypisat pouzivatelov/UID: 5")
     print("Zobrazit ARP tabulku: 6")
+    print("Zobrazit obsah suboru: 7")
+    print("Vyhladat retazec v subore: 8")
     print("naspat: 0")
 
     a = ""
 
-    while a != "1" and a != "2" and a != "3" and a != "4" and a != "5" and a != "0" and a != "6" and a != "7":
+    while a != "1" and a != "2" and a != "3" and a != "4" and a != "5" and a != "0" and a != "6" and a != "7" and a != "8":
         a = input()
         if a == "1":
             print_full_data()
@@ -340,6 +342,21 @@ def analyse():
             print("Zadajte cestu k suboru: \n")
             path = input()
             read_file(path)
+
+        elif a == "8":
+            print("Zadajte cestu k suboru: ")
+            path = input()
+            print("Zadajte hladany retazec: ")
+            string = input()
+
+            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Vyhladavanie retazca: " + string + " v subore: " + path + "\n")
+            file.close()
+
+            analyser.find_string(string, path, _OUTPUT_PATH, _CASE_NAME)
 
         elif a == "0":
             return
@@ -387,3 +404,4 @@ print("|_|  \\___/|_|  \\___|_| |_|___/_/ \\_\\")
 print("\n")
 
 forensx_init()
+
