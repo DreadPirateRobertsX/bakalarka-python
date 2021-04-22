@@ -235,6 +235,15 @@ def data_acquisition():
             file.write(" root;\n")
             file.close()
             print_data()
+            print("\nVypisat smerovaciu tabulku? (Y/n)\n")
+            x = input()
+            if x == "Y" or x == "y":
+                file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+                now = datetime.now()
+                dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+                file.write("\n" + dt_string)
+                file.write(" - Analytik si vyziiadal vypis smerovace tabulky:\n")
+                extr.getRoutingTable()
 
         elif a == "2":
             file_acquisition()
@@ -271,7 +280,7 @@ def print_users():
     file.close()
 
 
-def show_file(path):
+def read_file(path):
     file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -294,7 +303,7 @@ def analyse():
 
     a = ""
 
-    while a != "1" and a != "2" and a != "3" and a != "4" and a != "5" and a != "0" and a != "6":
+    while a != "1" and a != "2" and a != "3" and a != "4" and a != "5" and a != "0" and a != "6" and a != "7":
         a = input()
         if a == "1":
             print_full_data()
@@ -313,7 +322,7 @@ def analyse():
         elif a == "5":
             print_users()
         elif a == "6":
-            show_file("/proc/net/arp")
+            read_file("/proc/net/arp")
 
             print("Ulozit?(Y/n)\n")
             x = input()
@@ -326,6 +335,11 @@ def analyse():
 
                 extr.fileCopy("/proc/net/arp", _OUTPUT_PATH + "ARP/" + x)
                 hshr.store_hash(_OUTPUT_PATH + "ARP/" + x, True, 3)
+
+        elif a == "7":
+            print("Zadajte cestu k suboru: \n")
+            path = input()
+            read_file(path)
 
         elif a == "0":
             return

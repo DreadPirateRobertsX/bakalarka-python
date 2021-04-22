@@ -4,6 +4,7 @@ import socket
 import struct
 from prettytable import PrettyTable
 from shutil import copyfile
+from codecs import decode
 import os.path
 import psutil
 from os import path
@@ -184,6 +185,25 @@ class MyExtractor():
         f.close()
         print(t)
 
+    def getRoutingTable(self):
+        my_path = "/proc/net/route"
+        raw_routing_table = loadFileToArray(my_path)
+        del raw_routing_table[0]
+        self.format_route_table(raw_routing_table)
+        self.printRoutingTable(raw_routing_table)
+
+    def printRoutingTable(self, table):
+        t = PrettyTable(['Iface', 'Destination', 'Gateway', 'Flags', 'RefCnt', 'Use', 'Metric'])
+
+        for line in table:
+            t.add_row([line[0], line[1], line[2], line[3], line[4], line[5],
+                       line[6]])
+
+        f = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        f.write("/n" + str(t))
+        f.close()
+        print(t)
+
     def getNetworkConn(self):
         self.m_raw_network_conn.clear()
         self.m_readable_conn.clear()
@@ -201,8 +221,23 @@ class MyExtractor():
         del raw_network_conn[0]
         self.m_raw_network_conn += raw_network_conn
         readable_table_udp = self.formatTcpUdpTable(raw_network_conn, "UDP")
-
         readable_table += readable_table_udp
+        self.m_readable_conn = list(map(list, readable_table))
+
+        full_path = my_path + "/udp6"
+        raw_network_conn = loadFileToArray(full_path)
+        del raw_network_conn[0]
+        self.m_raw_network_conn += raw_network_conn
+        readable_table_udp6 = self.formatTcpUdpTable(raw_network_conn, "UDP6")
+        readable_table += readable_table_udp6
+        self.m_readable_conn = list(map(list, readable_table))
+
+        full_path = my_path + "/tcp6"
+        raw_network_conn = loadFileToArray(full_path)
+        del raw_network_conn[0]
+        self.m_raw_network_conn += raw_network_conn
+        readable_table_udp6 = self.formatTcpUdpTable(raw_network_conn, "TCP6")
+        readable_table += readable_table_udp6
         self.m_readable_conn = list(map(list, readable_table))
 
         file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
@@ -222,6 +257,21 @@ class MyExtractor():
         self.m_conn_of_interest_storage.append(tmp.copy())
 
     @staticmethod
+    def format_route_table(raw_table):
+        for routes in raw_table:
+
+
+            destination = int(routes[1], 16)
+            hex(destination)
+            struct.pack("<L", destination)
+            routes[1] = socket.inet_ntoa(struct.pack("<L", destination))
+
+            getway = int(routes[2], 16)
+            hex(getway)
+            struct.pack("<L", getway)
+            routes[2] = socket.inet_ntoa(struct.pack("<L", getway))
+
+    @staticmethod
     def formatTcpUdpTable(raw_table, table_type):
         readable_table = list(map(list, raw_table))
         for conn in readable_table:
@@ -229,22 +279,46 @@ class MyExtractor():
             remote = conn[2]
 
             spltd = local.split(":")
-            addr_long = int(spltd[0], 16)
-            hex(addr_long)
-            struct.pack("<L", addr_long)
-            spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))
-            spltd[1] = int(spltd[1], 16)
-            local = str(spltd[0]) + ":" + str(spltd[1])
-            conn[1] = local
 
-            spltd = remote.split(":")
-            addr_long = int(spltd[0], 16)
-            hex(addr_long)
-            struct.pack("<L", addr_long)
-            spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))
-            spltd[1] = int(spltd[1], 16)
-            remote = str(spltd[0]) + ":" + str(spltd[1])
-            conn[2] = remote
+            if table_type == "TCP" or table_type == "UDP":
+                addr_long = int(spltd[0], 16)
+                hex(addr_long)
+                struct.pack("<L", addr_long)
+                spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))
+
+                spltd[1] = int(spltd[1], 16)
+
+                local = str(spltd[0]) + ":" + str(spltd[1])
+                conn[1] = local
+
+                spltd = remote.split(":")
+                addr_long = int(spltd[0], 16)
+                hex(addr_long)
+                struct.pack("<L", addr_long)
+                spltd[0] = socket.inet_ntoa(struct.pack("<L", addr_long))
+                spltd[1] = int(spltd[1], 16)
+                remote = str(spltd[0]) + ":" + str(spltd[1])
+                conn[2] = remote
+            else:
+                spltd[0] = decode(spltd[0], 'hex')
+                spltd[0] = struct.unpack('>IIII', spltd[0])
+                spltd[0] = struct.pack('@IIII', *spltd[0])
+                spltd[0] = socket.inet_ntop(socket.AF_INET6, spltd[0])
+                spltd[1] = int(spltd[1], 16)
+
+                local = str(spltd[0]) + ":" + str(spltd[1])
+                conn[1] = local
+
+                spltd = remote.split(":")
+
+                spltd[0] = decode(spltd[0], 'hex')
+                spltd[0] = struct.unpack('>IIII', spltd[0])
+                spltd[0] = struct.pack('@IIII', *spltd[0])
+                spltd[0] = socket.inet_ntop(socket.AF_INET6, spltd[0])
+                spltd[1] = int(spltd[1], 16)
+
+                remote = str(spltd[0]) + ":" + str(spltd[1])
+                conn[2] = remote
 
             conn.insert(0, table_type)
         return readable_table
