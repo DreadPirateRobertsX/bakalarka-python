@@ -69,8 +69,21 @@ class MyExtractor():
     def __init__(self, out_path, case_name):
         self._OUTPUT_PATH = out_path
         self._CASE_NAME = case_name
-        self.m_users = os.listdir("/home")
+        self.m_users = self.get_users()
         self.get_users_uid()
+
+    def get_users(self):
+        final = []
+        dirs = os.listdir("/home")
+        shadow = loadFileToArray("/etc/shadow")
+        for dir in dirs:
+            for line in shadow:
+                line = line[0].split(":")
+                if line[0] == dir:
+                    final.append(dir)
+                    break
+
+        return final
 
     def getProcesses(self):
         self.m_processes.clear()

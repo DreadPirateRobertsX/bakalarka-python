@@ -9,8 +9,8 @@ print("Zadate nazov pripadu")
 _CASE_NAME = input()
 print("Zadajte vystupnu cestu")
 _OUTPUT_PATH = input()
-_OUTPUT_PATH += _CASE_NAME + "/"
-_OUTPUT_PATH = "/home/dreadpirateroberts/Desktop/forensX-volume/" + _CASE_NAME + "/"
+_OUTPUT_PATH += "/" + _CASE_NAME + "/"
+# _OUTPUT_PATH = "/home/dreadpirateroberts/Desktop/forensX-volume/" + _CASE_NAME + "/"
 
 directory = os.path.dirname(_OUTPUT_PATH + "Protokol/" + _CASE_NAME)
 if not os.path.exists(directory):

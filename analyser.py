@@ -83,7 +83,7 @@ def find_string(string, path, _OUTPUT_PATH, _CASE_NAME):
     prot = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    prot.write("\n" + dt_string)
+    prot.write("\n" + dt_string + "\n")
 
     with open(path) as file:
         for line in file:
