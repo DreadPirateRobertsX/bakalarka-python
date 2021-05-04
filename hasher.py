@@ -23,13 +23,16 @@ class HashStorage:
             my_hash = hashlib.sha1()
         else:
             my_hash = hashlib.sha256()
+        try:
+            with open(src, "rb") as file:
+                while True:
+                    data = file.read(bffer)
+                    if not data:
+                        break
+                    my_hash.update(data)
+        except IOError:
+            print("Vstpny subor sa nepodarilo otvorit " + src)
 
-        with open(src, "rb") as file:
-            while True:
-                data = file.read(bffer)
-                if not data:
-                    break
-                my_hash.update(data)
         if store:
             self.storage.append(my_hash.hexdigest())
             self.names.append(src)
@@ -61,4 +64,3 @@ class HashStorage:
                 print(i + " " + x)
             file.write("\n" + i + " " + x)
         file.close()
-

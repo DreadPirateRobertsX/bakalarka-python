@@ -9,8 +9,12 @@ print("Zadate nazov pripadu")
 _CASE_NAME = input()
 print("Zadajte vystupnu cestu")
 _OUTPUT_PATH = input()
+while not os.path.exists(_OUTPUT_PATH):
+    print("Vstupna cesta neexistuje")
+    _OUTPUT_PATH = input()
+
 _OUTPUT_PATH += "/" + _CASE_NAME + "/"
-# _OUTPUT_PATH = "/home/dreadpirateroberts/Desktop/forensX-volume/" + _CASE_NAME + "/"
+_OUTPUT_PATH = "/home/dreadpirateroberts/Desktop/forensX-volume/" + _CASE_NAME + "/"
 
 directory = os.path.dirname(_OUTPUT_PATH + "Protokol/" + _CASE_NAME)
 if not os.path.exists(directory):
@@ -145,6 +149,9 @@ def file_acquisition():
     path = input()
     print("Zadajte nazov suboru: ")
     name = input()
+    if name == "":
+        print("Nespravny format pre nazov vystupneho suboru")
+        return
     print("Zadate sposob hash-ovania")
     print("MD5: 1")
     print("SHA1: 2")
@@ -232,7 +239,6 @@ def data_acquisition():
             file.write(" - Extrahovana historia prikazov vsetkych pouzivatelov:\n")
             for usr in extr.m_users:
                 file.write(" " + str(usr) + "; ")
-            file.write(" root;\n")
             file.close()
             print_data()
             print("\nVypisat smerovaciu tabulku? (Y/n)\n")
@@ -256,7 +262,7 @@ def data_acquisition():
 def print_data():
     a = ""
     while a != "Y" and a != "y" and a != "n":
-        print("Vypisat data? - Tabulky procesov a sietove spojenia (Y/n)")
+        print("\nVypisat data? - Tabulky procesov a sietove spojenia (Y/n)")
         a = input()
         if a == "Y" or a == "y":
             print_full_data()
@@ -280,16 +286,19 @@ def print_users():
     file.close()
 
 
-def read_file(path):
+def read_file(path_of_file):
     file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     file.write("\n" + dt_string)
-    file.write(" - Analytik si vyziadal zobrazit subor: " + path + "\n")
+    file.write(" - Analytik si vyziadal zobrazit subor: " + path_of_file + "\n")
     file.close()
 
-    with open(path, 'r') as file:
-        print(file.read())
+    try:
+        with open(path_of_file, 'r') as file:
+            print(file.read())
+    except IOError:
+        print("Neplatna cesta hladaneho sboru")
 
 
 def analyse():
@@ -404,4 +413,3 @@ print("|_|  \\___/|_|  \\___|_| |_|___/_/ \\_\\")
 print("\n")
 
 forensx_init()
-

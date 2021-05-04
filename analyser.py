@@ -61,7 +61,7 @@ def network_conn_init(extracted):
                         result_pids.append(pid)
                         helper = True
                         break
-                except:
+                except IOError:
                     continue
             if helper:
                 helper = False
@@ -85,12 +85,16 @@ def find_string(string, path, _OUTPUT_PATH, _CASE_NAME):
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     prot.write("\n" + dt_string + "\n")
 
-    with open(path) as file:
-        for line in file:
-            if string in line:
-                print(str(i) + ": " + line)
-                prot.write(str(i) + ": " + line)
-            i += 1
+    try:
+        with open(path) as file:
+            for line in file:
+                if string in line:
+                    print(str(i) + ": " + line)
+                    prot.write(str(i) + ": " + line)
+                i += 1
+    except IOError:
+        print("Vstpny subor sa nepodarilo otvorit")
+
     prot.write("\n")
     prot.close()
 

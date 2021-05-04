@@ -17,8 +17,10 @@ def loadLineToProcess(num, full_path):
     if not path.exists(full_path):
         print("Vstpny subor neexistuje!" + " " + full_path)
         return
-
-    file_ob = open(full_path).readlines()
+    try:
+        file_ob = open(full_path).readlines()
+    except IOError:
+        return "---"
     line = ""
     for i, line in enumerate(file_ob):
         if i + 1 == num:
@@ -30,9 +32,11 @@ def loadFileToArray(full_path):
     if not path.exists(full_path):
         print("Vstpny subor neexistuje!" + " " + full_path)
         return
-
-    with open(full_path) as file:
-        lines = [line.split() for line in file]
+    try:
+        with open(full_path) as file:
+            lines = [line.split() for line in file]
+    except IOError:
+        return "---"
 
     return lines
 
@@ -54,7 +58,7 @@ def comm_from_pid(pid):
     return comm
 
 
-class MyExtractor():
+class MyExtractor:
     m_processes = []
     m_raw_network_conn = []
     m_readable_conn = []
@@ -72,15 +76,16 @@ class MyExtractor():
         self.m_users = self.get_users()
         self.get_users_uid()
 
-    def get_users(self):
+    @staticmethod
+    def get_users():
         final = []
         dirs = os.listdir("/home")
         shadow = loadFileToArray("/etc/shadow")
-        for dir in dirs:
+        for m_dir in dirs:
             for line in shadow:
                 line = line[0].split(":")
-                if line[0] == dir:
-                    final.append(dir)
+                if line[0] == m_dir:
+                    final.append(m_dir)
                     break
 
         return final
@@ -125,11 +130,11 @@ class MyExtractor():
         for v, proc in zip(var, self.m_processes):
             try:
                 proc.m_cpu_usage = v.cpu_percent(interval=0)
-            except:
+            except IOError:
                 proc.m_cpu_usage = "-"
             try:
                 proc.m_ram_usage = v.memory_percent()
-            except:
+            except IOError:
                 proc.m_ram_usage = "-"
 
     @staticmethod
@@ -169,14 +174,14 @@ class MyExtractor():
             p = psutil.Process(int(proc.m_pid))
             p.create_time()
             proc.m_start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.create_time()))
-        except:
-            start_time = "-"
+        except IOError:
+            proc.m_start_time = "-"
             pass
 
     def printProcesses(self, table_num, full):
         if table_num < 0:
             return
-        start_time = "-"
+
         if full:
             tmp = self.m_processes_storage
             t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm', 'Start time'])
@@ -272,8 +277,6 @@ class MyExtractor():
     @staticmethod
     def format_route_table(raw_table):
         for routes in raw_table:
-
-
             destination = int(routes[1], 16)
             hex(destination)
             struct.pack("<L", destination)
@@ -357,8 +360,10 @@ class MyExtractor():
         full_path = os.path.dirname(self._OUTPUT_PATH + "CommandHistory/")
         if not os.path.exists(full_path):
             os.makedirs(full_path)
+        print("Extrahovana historia prikazov vsetkych pouzivatelov:")
         for user in self.m_users:
             file_path = full_path + "/" + user
+            print(user)
             self.fileCopy("/home/" + str(user) + "/.bash_history", file_path)
             hasher.store_hash(file_path, True, 3)
         self.fileCopy("/root/.bash_history", full_path + "/root")
@@ -387,7 +392,11 @@ class MyExtractor():
 
     def fileCopy(self, src, dst):
         if path.exists(src):
-            file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+            try:
+                file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+            except IOError:
+                print("Subor sa nepodarilo otvorit")
+                return
             now = datetime.now()
             dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
             file.write("\n" + dt_string)
@@ -395,6 +404,7 @@ class MyExtractor():
             file.close()
 
             copyfile(src, dst)
+            print("Subor " + src + " - stiahnuty")
         else:
             print("Vstpny subor neexistuje!" + " " + src)
 
@@ -402,15 +412,19 @@ class MyExtractor():
         if path.exists("/var/log/syslog"):
             self.fileCopy("/var/log/syslog", self._OUTPUT_PATH + "syslog")
             hasher.store_hash(self._OUTPUT_PATH + "syslog", True, "3")
+
         if path.exists("/var/log/auth.log"):
             self.fileCopy("/var/log/auth.log", self._OUTPUT_PATH + "auth.log")
             hasher.store_hash(self._OUTPUT_PATH + "auth.log", True, "3")
+
         if path.exists("/var/log/boot.log"):
             self.fileCopy("/var/log/boot.log", self._OUTPUT_PATH + "boot.log")
             hasher.store_hash(self._OUTPUT_PATH + "boot.log", True, "3")
+
         if path.exists("/var/log/kern.log"):
             self.fileCopy("/var/log/kern.log", self._OUTPUT_PATH + "kern.log")
             hasher.store_hash(self._OUTPUT_PATH + "kern.log", True, "3")
+
         if path.exists("/var/log/faillog"):
             self.fileCopy("/var/log/faillog", self._OUTPUT_PATH + "faillog")
             hasher.store_hash(self._OUTPUT_PATH + "faillog", True, "3")
@@ -441,7 +455,11 @@ class MyExtractor():
             self.m_conn_of_interest_storage.append(tmp)
 
     def get_users_uid(self):
-        f = open("/etc/passwd", "r")
+        try:
+            f = open("/etc/passwd", "r")
+        except IOError:
+            print("Subor /etc/passwd sa nepodarilo otvorit")
+            return
         lines = f.readlines()
         for usr in self.m_users:
             found = False
