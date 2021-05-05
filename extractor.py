@@ -174,7 +174,7 @@ class MyExtractor:
             p = psutil.Process(int(proc.m_pid))
             p.create_time()
             proc.m_start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.create_time()))
-        except IOError:
+        except psutil.NoSuchProcess:
             proc.m_start_time = "-"
             pass
 

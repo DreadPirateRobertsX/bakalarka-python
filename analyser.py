@@ -107,3 +107,18 @@ def get_nc_inode(extr):
         sl.append(conn[0])
         inodes.append(conn[9])
     return sl, inodes
+
+
+def read_file(path_of_file, _OUTPUT_PATH, _CASE_NAME):
+    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    file.write("\n" + dt_string)
+    file.write(" - Analytik si vyziadal zobrazit subor: " + path_of_file + "\n")
+    file.close()
+
+    try:
+        with open(path_of_file, 'r') as file:
+            print(file.read())
+    except IOError:
+        print("Neplatna cesta hladaneho sboru")

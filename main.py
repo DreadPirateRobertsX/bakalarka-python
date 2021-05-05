@@ -1,5 +1,6 @@
 import extractor
 import analyser
+import Terminal
 import os
 import hasher
 from datetime import datetime
@@ -24,16 +25,7 @@ f = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "w")
 f.write(_CASE_NAME + " - " + str(datetime.now()) + "\n")
 f.close()
 
-pid = []
-ppid = []
-uid = []
-
-tcp = []
-sl = []
-local = ["127.0.0.53"]
-remote = []
-status = []
-
+trm = Terminal.MyTerminal(_OUTPUT_PATH, _CASE_NAME)
 extr = extractor.MyExtractor(_OUTPUT_PATH, _CASE_NAME)
 hshr = hasher.HashStorage(_OUTPUT_PATH, _CASE_NAME)
 
@@ -201,6 +193,21 @@ def hash_file():
     return
 
 
+# def read_file(path_of_file):
+#     file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+#     now = datetime.now()
+#     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+#     file.write("\n" + dt_string)
+#     file.write(" - Analytik si vyziadal zobrazit subor: " + path_of_file + "\n")
+#     file.close()
+#
+#     try:
+#         with open(path_of_file, 'r') as file:
+#             print(file.read())
+#     except IOError:
+#         print("Neplatna cesta hladaneho sboru")
+
+
 def data_acquisition():
     global _LOGS_EXTRACTED
     print("Extrahovat zakladne data: 1")
@@ -286,21 +293,6 @@ def print_users():
     file.close()
 
 
-def read_file(path_of_file):
-    file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    file.write("\n" + dt_string)
-    file.write(" - Analytik si vyziadal zobrazit subor: " + path_of_file + "\n")
-    file.close()
-
-    try:
-        with open(path_of_file, 'r') as file:
-            print(file.read())
-    except IOError:
-        print("Neplatna cesta hladaneho sboru")
-
-
 def analyse():
     print("Vypisat ziskane data: 1")
     print("Analyza procesov: 2")
@@ -333,7 +325,7 @@ def analyse():
         elif a == "5":
             print_users()
         elif a == "6":
-            read_file("/proc/net/arp")
+            analyser.read_file("/proc/net/arp", _OUTPUT_PATH, _CASE_NAME)
 
             print("Ulozit?(Y/n)\n")
             x = input()
@@ -350,7 +342,7 @@ def analyse():
         elif a == "7":
             print("Zadajte cestu k suboru: \n")
             path = input()
-            read_file(path)
+            analyser.read_file(path, _OUTPUT_PATH, _CASE_NAME)
 
         elif a == "8":
             print("Zadajte cestu k suboru: ")
@@ -380,7 +372,9 @@ def forensx_init():
         print("\n\nPre zber dat stlacte: 1")
         print("Pre overenie integrity stlacte: 2")
         print("Pre analyzu dat stlacte: 3")
+        print("Terminal: 4")
         print("Pre ukoncenie programu stlacte: 0")
+
         a = input()
         if a == "1":
             data_acquisition()
@@ -388,6 +382,8 @@ def forensx_init():
             hash_functions()
         elif a == "3":
             analyse()
+        elif a == "4":
+            trm.terminal_init()
         elif a == "0":
             break
         else:
@@ -412,4 +408,8 @@ print("| | | (_) | | |  __/ | | \\__ \\/ . \\")
 print("|_|  \\___/|_|  \\___|_| |_|___/_/ \\_\\")
 print("\n")
 
-forensx_init()
+try:
+    forensx_init()
+except:
+    print("Nieco nefunguje")
+
