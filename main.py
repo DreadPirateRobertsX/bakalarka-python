@@ -374,6 +374,7 @@ def forensx_init():
         print("Pre overenie integrity stlacte: 2")
         print("Pre analyzu dat stlacte: 3")
         print("Terminal: 4")
+        print("Manual: 5")
         print("Pre ukoncenie programu stlacte: 0")
 
         a = input()
@@ -385,6 +386,9 @@ def forensx_init():
             analyse()
         elif a == "4":
             trm.terminal_init()
+        elif a == "5":
+            man = open("man.txt", "r")
+            print(man.read())
         elif a == "0":
             break
         else:
@@ -398,6 +402,11 @@ def forensx_init():
     file.write(" - Koniec programu - Vypis ziskanych hash-ov\n")
     file.close()
     hshr.print_hashes(False)
+
+    final_hash = hshr.store_hash(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, False, 3)
+    file = open(_OUTPUT_PATH + "Protokol/Hash.txt", "w+")
+    file.write(final_hash)
+    file.close()
     return
 
 
@@ -421,3 +430,9 @@ except:
     file_o.write(" - Koniec programu - Vypis ziskanych hash-ov\n")
     file_o.close()
     hshr.print_hashes(False)
+
+    final_hash = hshr.store_hash(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, False, 3)
+    os.makedirs(_OUTPUT_PATH + "Protokol/Hash")
+    file = open(_OUTPUT_PATH + "Protokol/Hash")
+    file.write(final_hash)
+    file.close()

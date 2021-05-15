@@ -46,17 +46,17 @@ def analyse_network_conn(extracted, num, interval):
 
 def network_conn_init(extracted):
     helper = False
-    result_sls = []
+    result_locals = []
     result_pids = []
-    sls, inodes = get_nc_inode(extracted)
-    for inode, sl in zip(inodes, sls):
+    locals, inodes = get_nc_inode(extracted)
+    for inode, local in zip(inodes, locals):
         pids = extractor.getPIDs()
         for pid in pids:
             fds = os.listdir("/proc/" + pid + "/fd/")
             for fd in fds:
                 try:
                     if ("socket:[" + inode + "]") == os.readlink("/proc/" + pid + "/fd/" + fd):
-                        result_sls.append(sl)
+                        result_locals.append(local)
                         result_pids.append(pid)
                         helper = True
                         break
@@ -66,7 +66,7 @@ def network_conn_init(extracted):
                 helper = False
                 break
 
-    extracted.printConnInit(result_sls, result_pids)
+    extracted.printConnInit(result_locals, result_pids)
 
 
 def value_parser(string_values):
@@ -100,12 +100,12 @@ def find_string(string, path, _OUTPUT_PATH, _CASE_NAME):
 
 def get_nc_inode(extr):
     extr.getNetworkConn()
-    sl = []
+    locals = []
     inodes = []
-    for conn in extr.m_raw_network_conn:
-        sl.append(conn[0])
-        inodes.append(conn[9])
-    return sl, inodes
+    for raw_conn, read_conn in zip(extr.m_raw_network_conn, extr.m_readable_conn):
+        locals.append(read_conn[2])
+        inodes.append(raw_conn[9])
+    return locals, inodes
 
 
 def read_file(path_of_file, _OUTPUT_PATH, _CASE_NAME):

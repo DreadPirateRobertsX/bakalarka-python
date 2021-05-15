@@ -355,14 +355,13 @@ class MyExtractor:
     def printNetworkConn(self, table_num, full):
         if table_num < 0:
             return
-        t = PrettyTable(['Type', 'sl', 'local_addr', 'remoote_addr', 'status', 'tx-queue', 'rx-queue'])
+        t = PrettyTable(['Type', 'sl', 'local_addr', 'remoote_addr', 'status'])
         if full:
             tmp = self.m_readable_conn_storage
         else:
             tmp = self.m_conn_of_interest_storage
         for connection in tmp[table_num]:
-            t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], connection[5],
-                       connection[6]])
+            t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4]])
 
         f = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
         f.write("/n" + str(t))
@@ -382,20 +381,19 @@ class MyExtractor:
         self.fileCopy("/root/.bash_history", full_path + "/root")
         hasher.store_hash(full_path + "/root", True, 3)
 
-    def printConnInit(self, result_sls, result_pids):
+    def printConnInit(self, result_locals, result_pids):
         pid = "-"
         t = PrettyTable(
-            ['Type', 'sl', 'local_addr', 'remoote_addr', 'status', 'tx-queue', 'rx-queue', 'process', 'PID'])
+            ['Type', 'sl', 'local_addr', 'remoote_addr', 'status', 'process', 'PID'])
         comm = "-"
         for connection in self.m_readable_conn:
-            if str(connection[1]) in result_sls:
-                for sl, pid in zip(result_sls, result_pids):
-                    if sl == connection[1]:
+            if str(connection[2]) in result_locals:  # dat na 2 in locals
+                for local, pid in zip(result_locals, result_pids):
+                    if local == connection[2]:
                         comm = comm_from_pid(pid)
                         break
 
-            t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], connection[5],
-                       connection[6], comm, pid])
+            t.add_row([connection[0], connection[1], connection[2], connection[3], connection[4], comm, pid])
             comm = "-"
 
         f = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
