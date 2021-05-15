@@ -52,11 +52,10 @@ def network_conn_init(extracted):
     for inode, sl in zip(inodes, sls):
         pids = extractor.getPIDs()
         for pid in pids:
-
-            fds = os.listdir("/proc/%s/fd/" % pid)
+            fds = os.listdir("/proc/" + pid + "/fd/")
             for fd in fds:
                 try:
-                    if ('socket:[%s]' % inode) == os.readlink("/proc/%s/fd/%s" % (pid, fd)):
+                    if ("socket:[" + inode + "]") == os.readlink("/proc/" + pid + "/fd/" + fd):
                         result_sls.append(sl)
                         result_pids.append(pid)
                         helper = True
@@ -122,3 +121,5 @@ def read_file(path_of_file, _OUTPUT_PATH, _CASE_NAME):
             print(file.read())
     except IOError:
         print("Neplatna cesta hladaneho sboru")
+    except UnicodeDecodeError:
+        print("Nejde o textovy subor")

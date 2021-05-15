@@ -1,5 +1,6 @@
 import hashlib
 from os import path
+from datetime import datetime
 
 
 class HashStorage:
@@ -51,6 +52,10 @@ class HashStorage:
         hash2 = self.store_hash(f2, False, "3")
         print("Hash1: " + str(hash1))
         print("Hash2: " + str(hash2))
+        if hash1 == hash2:
+            print("Subory su zhodne")
+        else:
+            print("Subory sa nezhoduju")
 
         file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
         file.write("\nHash1: " + str(hash1))
@@ -58,6 +63,12 @@ class HashStorage:
         file.close()
 
     def print_hashes(self, prnt):
+        file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        file.write("\n" + dt_string)
+        file.write(" - Analytik si vyziadal vypis ziskanych hash-ov")
+        file.close()
         file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
         for i, x in zip(self.names, self.storage):
             if prnt:

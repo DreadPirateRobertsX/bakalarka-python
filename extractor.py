@@ -15,8 +15,8 @@ from datetime import datetime
 
 def loadLineToProcess(num, full_path):
     if not path.exists(full_path):
-        print("Vstpny subor neexistuje!" + " " + full_path)
-        return
+        print("Vstpny subor neexistuje1!" + " " + full_path)
+        return "---"
     try:
         file_ob = open(full_path).readlines()
     except IOError:
@@ -31,7 +31,7 @@ def loadLineToProcess(num, full_path):
 def loadFileToArray(full_path):
     if not path.exists(full_path):
         print("Vstpny subor neexistuje!" + " " + full_path)
-        return
+        return "---"
     try:
         with open(full_path) as file:
             lines = [line.split() for line in file]
@@ -79,13 +79,19 @@ class MyExtractor:
     @staticmethod
     def get_users():
         final = []
-        dirs = os.listdir("/home")
-        shadow = loadFileToArray("/etc/shadow")
-        for m_dir in dirs:
+        users = []
+        # dirs = os.listdir("/home")
+
+        shadow = loadFileToArray("/etc/passwd")
+        for line in shadow:
+            line = line[0].split(":")
+            if line[-1] == "/bin/bash" or line[-1] == "/bin/sh":
+                users.append(line[0])
+        for usr in users:
             for line in shadow:
                 line = line[0].split(":")
-                if line[0] == m_dir:
-                    final.append(m_dir)
+                if line[0] == usr:
+                    final.append(usr)
                     break
 
         return final
@@ -99,8 +105,9 @@ class MyExtractor:
             if file.isnumeric():
                 proc = Process()
                 proc.m_pid = file
-                self.loadProcData(proc)
+                self.load_proc_data(proc)
                 self.m_processes.append(proc)
+
         file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -118,7 +125,7 @@ class MyExtractor:
             if file.isnumeric():
                 proc = Process()
                 proc.m_pid = file
-                self.loadProcData(proc)
+                self.load_proc_data(proc)
                 if proc.m_pid in pid or proc.m_ppid in ppid or proc.m_uid in uid:
                     var.append(psutil.Process(int(proc.m_pid)))
                     var[helper].cpu_percent(interval=0)
@@ -138,14 +145,15 @@ class MyExtractor:
                 proc.m_ram_usage = "-"
 
     @staticmethod
-    def loadProcData(proc):
+    def load_proc_data(proc):
         my_path = "/proc"
 
         full_path = my_path + "/" + proc.m_pid + "/status"
         line = loadLineToProcess(7, full_path)
         proc.m_ppid = line
-        tmp = str(proc.m_pid).strip(' ')
-        proc.m_ppid = tmp[0]
+        if line != "---":
+            tmp = str(proc.m_ppid).split('\t')
+            proc.m_ppid = str(int(tmp[1]))
 
         full_path = my_path + "/" + proc.m_pid + "/status"
         line = loadLineToProcess(3, full_path)
@@ -181,7 +189,6 @@ class MyExtractor:
     def printProcesses(self, table_num, full):
         if table_num < 0:
             return
-
         if full:
             tmp = self.m_processes_storage
             t = PrettyTable(['PID', 'PPID', 'State', 'UID', 'Wchan', 'comm', 'Start time'])
@@ -204,6 +211,12 @@ class MyExtractor:
         print(t)
 
     def getRoutingTable(self):
+        file = open(self._OUTPUT_PATH + "Protokol/" + self._CASE_NAME, "a")
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        file.write("\n" + dt_string)
+        file.write(" - Citanie obsahu smerovacej tabulky /proc/net/route\n")
+
         my_path = "/proc/net/route"
         raw_routing_table = loadFileToArray(my_path)
         del raw_routing_table[0]

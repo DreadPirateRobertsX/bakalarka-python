@@ -6,7 +6,7 @@ import hasher
 from datetime import datetime
 
 _LOGS_EXTRACTED = False
-print("Zadate nazov pripadu")
+print("Zadajte nazov pripadu")
 _CASE_NAME = input()
 print("Zadajte vystupnu cestu")
 _OUTPUT_PATH = input()
@@ -56,14 +56,7 @@ def hash_functions():
     while a != "1" and a != "0" and a != "2" and a != "3":
         a = input()
         if a == "1":
-            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
-            now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-            file.write("\n" + dt_string)
-            file.write(" - Analytik si vyziadal vypis ziskanych hash-ov")
-            file.close()
             hshr.print_hashes(True)
-
         elif a == "2":
             hash_file_compare()
         elif a == "3":
@@ -76,6 +69,9 @@ def hash_functions():
 
 
 def print_full_data():
+    if len(extr.m_processes_storage) == 0:
+        print("Zatial neboli stiahnute ziadne tabulky")
+        return
     print("Pocet tabuliek procesov: " + str(len(extr.m_processes_storage)) + "\n" +
           "Pocet tabuliek sietovych spojeni: " + str(len(extr.m_readable_conn_storage)) + "\n\n")
     print("Zadajte index tabulky procesov (ENTER pre nevypisanie)")
@@ -87,6 +83,9 @@ def print_full_data():
     if b == '':
         b = 0
     if a != 0:
+        if int(a) > len(extr.m_processes_storage):
+            print("Tabulka s procesmi neexistuje")
+            return
         file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -95,6 +94,9 @@ def print_full_data():
         file.close()
     extr.printProcesses(int(a) - 1, True)
     if b != 0:
+        if int(b) > len(extr.m_readable_conn_storage):
+            print("Tabulka so sietovymi spojeniami neexistuje")
+            return
         file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -193,21 +195,6 @@ def hash_file():
     return
 
 
-# def read_file(path_of_file):
-#     file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
-#     now = datetime.now()
-#     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-#     file.write("\n" + dt_string)
-#     file.write(" - Analytik si vyziadal zobrazit subor: " + path_of_file + "\n")
-#     file.close()
-#
-#     try:
-#         with open(path_of_file, 'r') as file:
-#             print(file.read())
-#     except IOError:
-#         print("Neplatna cesta hladaneho sboru")
-
-
 def data_acquisition():
     global _LOGS_EXTRACTED
     print("Extrahovat zakladne data: 1")
@@ -289,7 +276,7 @@ def print_users():
 
     for usr, u_uid in zip(extr.m_users, extr.m_uids):
         file.write(usr + ':' + u_uid + "\n")
-        print(usr + ':' + u_uid + "\n")
+        print(usr + ':' + u_uid)
     file.close()
 
 
@@ -300,20 +287,22 @@ def analyse():
     print("Spojenie socketu s procesom: 4")
     print("Vypisat pouzivatelov/UID: 5")
     print("Zobrazit ARP tabulku: 6")
-    print("Zobrazit obsah suboru: 7")
-    print("Vyhladat retazec v subore: 8")
+    print("Zobrazit Smerovaciu tabulku: 7")
+    print("Zobrazit obsah suboru: 8")
+    print("Vyhladat retazec v subore: 9")
     print("naspat: 0")
 
-    a = ""
-
-    while a != "1" and a != "2" and a != "3" and a != "4" and a != "5" and a != "0" and a != "6" and a != "7" and a != "8":
+    while True:
         a = input()
         if a == "1":
             print_full_data()
+            break
         elif a == "2":
             process_analysis()
+            break
         elif a == "3":
             network_analysis()
+            break
         elif a == "4":
             file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
             now = datetime.now()
@@ -322,15 +311,17 @@ def analyse():
             file.write(" - Analytik si vyziadal zobrazit priradenie sietovych spojeni s procesmi ktore ich vytvorili\n")
             file.close()
             analyser.network_conn_init(extr)
+            break
         elif a == "5":
             print_users()
+            break
         elif a == "6":
             analyser.read_file("/proc/net/arp", _OUTPUT_PATH, _CASE_NAME)
 
             print("Ulozit?(Y/n)\n")
             x = input()
             if x == "Y" or x == "y":
-                print("Zadate nazov: ")
+                print("Zadajte nazov: ")
                 x = input()
                 direct = os.path.dirname(_OUTPUT_PATH + "ARP/" + x)
                 if not os.path.exists(direct):
@@ -338,13 +329,23 @@ def analyse():
 
                 extr.fileCopy("/proc/net/arp", _OUTPUT_PATH + "ARP/" + x)
                 hshr.store_hash(_OUTPUT_PATH + "ARP/" + x, True, 3)
-
+                break
         elif a == "7":
+            file = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            file.write("\n" + dt_string)
+            file.write(" - Analytik si vyziiadal vypis smerovace tabulky:\n")
+            extr.getRoutingTable()
+            break
+
+        elif a == "8":
             print("Zadajte cestu k suboru: \n")
             path = input()
             analyser.read_file(path, _OUTPUT_PATH, _CASE_NAME)
+            break
 
-        elif a == "8":
+        elif a == "9":
             print("Zadajte cestu k suboru: ")
             path = input()
             print("Zadajte hladany retazec: ")
@@ -358,6 +359,7 @@ def analyse():
             file.close()
 
             analyser.find_string(string, path, _OUTPUT_PATH, _CASE_NAME)
+            break
 
         elif a == "0":
             return
@@ -367,8 +369,7 @@ def analyse():
 
 
 def forensx_init():
-    a = ""
-    while a != "0":
+    while True:
         print("\n\nPre zber dat stlacte: 1")
         print("Pre overenie integrity stlacte: 2")
         print("Pre analyzu dat stlacte: 3")
@@ -412,4 +413,11 @@ try:
     forensx_init()
 except:
     print("Nieco nefunguje")
+    file_o = open(_OUTPUT_PATH + "Protokol/" + _CASE_NAME, "a")
+    now_o = datetime.now()
+    dt_string_o = now_o.strftime("%d/%m/%Y %H:%M:%S")
 
+    file_o.write("\n\n\n" + dt_string_o)
+    file_o.write(" - Koniec programu - Vypis ziskanych hash-ov\n")
+    file_o.close()
+    hshr.print_hashes(False)

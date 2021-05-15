@@ -1,6 +1,5 @@
 from os import listdir, path
 import analyser
-from prettytable import PrettyTable
 
 
 class MyTerminal:
@@ -17,7 +16,7 @@ class MyTerminal:
 
         while command[0] != "exit":
             if command[0] == "ls":
-                self.listdir(command)
+                self.list_dir(command)
             elif command[0] == "cd":
                 self.change_directory(command)
             elif command[0] == "show":
@@ -36,7 +35,7 @@ class MyTerminal:
             new_path = new_path + "/" + command[1]
             analyser.read_file(new_path, self.output_path, self.case_name)
 
-    def listdir(self, command):
+    def list_dir(self, command):
         helper = 1
         if len(command) == 2:
             new_path = command[1]
